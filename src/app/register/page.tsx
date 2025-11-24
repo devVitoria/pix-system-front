@@ -113,15 +113,14 @@ const Register = () => {
 
   return isSuccess ? (
     <div
-      className="flex flex-1 flex-col gap-12 justify-center items-center bg-gray-600"
+      className="flex flex-1 flex-col gap-12 justify-center items-center  bg-gradient-to-r from-[#000a0e] via-[#062c38] to-[#122b36] "
       style={{ width: '100vw', height: '100vh' }}
     >
-      {/* <ToastContainer /> */}
-      <p className=" text-white justify-center w-full text-center">Seu cadastro foi registrado!</p>
+      <p className=" text-white justify-center w-full text-center font-bold">Seu cadastro foi registrado!</p>
       <Done></Done>
-      <p className="text-white justify-center w-full text-center">
+      <p className="text-white justify-center w-full text-center font-bold">
         Em instantes você será redirecionado para a página de{' '}
-        <b className="font-bold text-teal-600">Login</b>.
+        <b className="font-bold text-white">Login</b>.
       </p>
     </div>
   ) : (

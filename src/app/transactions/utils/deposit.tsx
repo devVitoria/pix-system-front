@@ -20,7 +20,12 @@ const Deposit = ({ setSaldo }: DepositProps) => {
         usuarioId: Number(localStorage.getItem('UserId')),
       })
 
-      if (teste.status) setIsSuccess(true)
+      if (teste.status) {
+        if (localStorage.getItem("Token") !== teste.data.token) {
+          localStorage.setItem("Token", teste.data.token)
+        }
+        setIsSuccess(true)
+      }
     },
   })
 

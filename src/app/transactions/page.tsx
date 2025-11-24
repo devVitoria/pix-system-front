@@ -13,19 +13,32 @@ import Deposit from './utils/deposit'
 import { TransactionProps, UserInfoProps } from './utils/interface'
 import { toast } from 'react-toastify'
 import { BiSearchAlt } from 'react-icons/bi'
+import ModalPixConsult from '../login/utils/modal-pix-consult'
+import { IoPlayBack } from 'react-icons/io5'
+import { TbPlayerTrackNextFilled } from 'react-icons/tb'
+import TransactionHistory from './utils/transaction-history'
 
 const Transactions = () => {
   const [operation, setOperation] = useState<'transactions' | 'history' | 'chavepix' | 'deposite'>(
     'transactions',
   )
-  const [saldo, setSaldo] = useState<number>(Number(localStorage.getItem('Saldo')) ?? 0)
+
+  // const [saldo, setSaldo] = useState<number>(Number(localStorage?.getItem('Saldo')) ?? 0)
+  // TODO: ajustar saldo global com localStorage
+  const [saldo, setSaldo] = useState<number>(0)
   const [chaves, setChaves] = useState<{ chave: string; tipo: string }[]>([])
   const [user, setUser] = useState<UserInfoProps>()
-  const [searchData, setSearchData] = useState<{ open: boolean | null, data: string | null }>({ open: null, data: null })
+  const [searchData, setSearchData] = useState<{ open: boolean | null, data: string | null }>({ open: null, data: 'user' })
   const [openUser, setOpenUser] = useState<boolean | null>(null)
   const [usersInfo, setUsersInfo] = useState<UserInfoProps[]>()
+  const [modalPix, setModalPix] = useState(false)
   const [transactionsInfo, setTransactionsInfo] = useState<TransactionProps[]>()
+  const [pageNumberUser, setPageNumberUser] = useState<number>(1)
+  const [totalPageUser, setTotalPageUser] = useState<number | null>(null)
+  const [totalPageTransactios, setTotalPageTransactions] = useState<number | null>(null)
 
+
+  const [pageNumberTransactions, setPageNumberTransactions] = useState<number>(1)
 
   const router = useRouter()
   const form = useForm({
@@ -44,6 +57,9 @@ const Transactions = () => {
 
       if (teste.status === 200) {
         setOpenUser(false)
+        if (localStorage.getItem("Token") !== teste.data.token) {
+          localStorage.setItem("Token", teste.data.token)
+        }
         toast.success('Dados atualizados com sucesso!')
       } else {
         toast.error('Erro ao atualizar dados. Tente novamente.')
@@ -55,21 +71,57 @@ const Transactions = () => {
 
   useEffect(() => {
     const getInfos = async () => {
-      const teste = await api.get("/v1/usuarios")
-      setUsersInfo(teste.data)
-      const teste2 = await api.get("/v1/transacoes")
-      setTransactionsInfo(teste2.data)
+      const teste = await api.get(`/v1/usuarios/pagination/${pageNumberUser}`)
+      setUsersInfo(teste.data.usuarios)
+      setTotalPageUser(teste.data.totalPages)
+      const teste2 = await api.get(`/v1/transacoes/pagination/${pageNumberTransactions}`)
+      setTotalPageTransactions(teste2.data.totalPages)
+      setTransactionsInfo(teste2.data.transacoes)
+
+
+      if (localStorage.getItem("Token") !== teste.data.token) {
+        localStorage.setItem("Token", teste.data.token)
+      }
     }
 
     getInfos()
 
-  }, [])
+  }, [searchData.open])
 
 
+  const handleChangePage = (type: string, operation?: string) => {
+
+    if (operation === 'tsr') {
+
+      if (type === 'next') {
+        if (pageNumberTransactions !== totalPageTransactios) {
+          setPageNumberUser(pageNumberTransactions + 1)
+          return
+        }
+      }
+
+      if (pageNumberTransactions > 1) {
+        setPageNumberUser(pageNumberTransactions - 1)
+        return
+      }
+      return
+    }
+    if (type === 'next') {
+      if (pageNumberUser !== totalPageUser) {
+        setPageNumberUser(pageNumberUser + 1)
+        return
+      }
+    }
+
+    if (pageNumberUser > 1) {
+      setPageNumberUser(pageNumberUser - 1)
+      return
+    }
+  }
 
   const renderScreen: Record<string, React.ReactNode> = {
     transactions: <Transaction setChaves={setChaves} chaves={chaves} setSaldo={setSaldo} />,
-    history: <div className="text-white">Histórico de transações</div>,
+    history: <TransactionHistory userId='' />, // TODO chsange to component
     chavepix: <PixkeyRegister />,
     deposite: <Deposit setSaldo={setSaldo} />,
   }
@@ -77,7 +129,10 @@ const Transactions = () => {
   useEffect(() => {
     const getUser = async () => {
       const teste = await api.get<UserInfoProps>(`v1/usuarios/${localStorage.getItem('UserId')}`)
-      setUser(teste.data)
+      setUser(teste.data?.usuario)
+      if (localStorage.getItem("Token") !== teste?.data?.token) {
+        localStorage.setItem("Token", teste?.data?.token ?? '')
+      }
     }
     getUser()
 
@@ -97,6 +152,15 @@ const Transactions = () => {
   const { Field } = form
 
 
+  useEffect(() => {
+    if (user) {
+      form.reset(user)
+    }
+  }, [user])
+
+
+
+
   return (
     <div
       className="flex flex-1  min-h-screen  flex-col bg-gradient-to-r from-[#000a0e] via-[#062c38] to-[#122b36]"
@@ -109,7 +173,8 @@ const Transactions = () => {
         <div className="flex flex-row px-10 py-3 w-full justify-between items-center">
           <div className="flex flex-col">
             <p className="text-lg text-white">
-              Bem vindo, {localStorage.getItem('Nome')?.trim().split(' ')[0]}!
+              {/* Bem vindo, {localStorage.getItem('Nome')?.trim().split(' ')[0]}! */}
+              Bem Vindo ..
             </p>
             <p className="text-sm text-white">Navegue entre as opções abaixo.</p>
           </div>
@@ -132,7 +197,7 @@ const Transactions = () => {
 
                 size={30}
                 onClick={() => {
-                  setSearchData(searchData.open ? { open: false, data: null } : { open: true, data: null })
+                  setSearchData(searchData.open ? { open: false, data: 'user' } : { open: true, data: 'user' })
                 }} />
 
             </div>
@@ -151,7 +216,7 @@ const Transactions = () => {
           <p className="text-white font-bold text-center pb-4">Dados da sua conta</p>
           <div className="bg-[#000a0e]/25 flex-col p-4 gap-4 flex">
             <div className=' max-h-80 overflow-auto gap-4 flex flex-col'>
-              <div className='flex flex-row justify-between items-center w-full'>
+              <div className='flex flex-row justify-between items-center w-full' key={user?.id}>
                 <Field name="cpfcnpj">
                   {(field) => (
                     <div className="flex flex-1 flex-col gap-2 justify-center items-center">
@@ -373,8 +438,8 @@ const Transactions = () => {
       }
 
       {searchData.open && (
-        <div className="absolute z-50 bg-white/5 backdrop-blur-lg border border-white/20 shadow-xl left-1/3 top-1/5 w-1/3 rounded-sm p-4">
-          <p className="text-white font-bold text-center pb-4">Buscar dados</p>
+        <div className="absolute w-10/12 z-10 bg-white/5 backdrop-blur-lg border border-white/20 shadow-xl top-1/5 left-1/12 rounded-sm p-4">
+          <p className="text-white font-bold text-center pb-4">Buscar dados {searchData.data === 'trs'}</p>
           <div className='flex flex-row justify-around items-center'>
             <p className="text-white text-sm text-center pb-4 hover:text-[15px] hover:font-bold" onClick={() => setSearchData((prev) => ({
               ...prev,
@@ -385,22 +450,96 @@ const Transactions = () => {
               data: 'trs',
             }))}>Transações</p>
           </div>
-          <div className="bg-[#000a0e]/25 flex-col p-4 gap-4 flex">
-            <div className=' max-h-80 overflow-auto gap-4 flex flex-col'>
+          <div className="bg-[#000a0e]/25 flex-col  p-4 gap-4 flex">
+            <div key={searchData.data} className=' max-h-80 overflow-auto gap-4 flex flex-col'>
+
               {
-                searchData.data === 'user' && usersInfo !== undefined ? (
 
-                  usersInfo.map((i) => {
-                    return (
-                      <div className='flex flex-row'>
-                        <p>Nome: {i.nome}</p>
+                searchData.data === 'user' ? (
+                  <>
+                    <div className='flex flex-row justify-between items-center'>
+                      <p className='font-bold text-sm text-center w-[20%] max-w-[20%] '>CPF</p>
+                      <p className='font-bold text-sm text-center w-[20%] max-w-[20%]'>Nome</p>
+                      <p className='font-bold text-sm text-center w-[20%] max-w-[20%]'>E-mail</p>
+                      <p className='font-bold text-sm text-center w-[20%] max-w-[20%]'>Telefone</p>
+                      <p className='font-bold text-sm text-center w-[20%] max-w-[20%]'>Endereço</p>
+
+                    </div>
+                    <div className='w-full h-[0.2px] my-2 bg-white opacity-40' />
+                    {
+                      usersInfo?.map((i) => {
+                        return (
+                          <div key={i.id + 'a'} className='flex flex-col'>
+                            <div className='flex flex-row justify-between items-center'>
+                              <p className='text-xs text-center w-[20%] max-w-[20%]'>{i.cpfcnpj}</p>
+                              <p className='text-xs text-center w-[20%] max-w-[20%]'>{i.nome}</p>
+                              <p className='text-xs text-center w-[20%] max-w-[20%]'>{i.email}</p>
+                              < p className='text-xs text-center w-[20%] max-w-[20%]'>{i.telefone}</p>
+                              < p className='text-xs text-center w-[20%] max-w-[20%]'>{i.cidade} - {i.bairro} - {i.rua}</p>
+                            </div>
+                            <div className='w-full h-[0.2px] my-4 bg-white opacity-20' />                      </div>
+                        )
+
+                      })
+                    }
+
+                    <div className="flex flex-row gap-2 pt-1 w-full justify-end items-center">
+                      <IoPlayBack color={pageNumberUser === 1 ? "#859094" : "#326579"} className="cursor-pointer" onClick={() => { handleChangePage('back') }} />
+
+                      <div className="w-6 h-4 rounded-sm bg-[#326579] flex justify-center items-center">
+                        <p className="text-xs">{pageNumberUser}</p>
                       </div>
-                    )
+                      <p className="text-[#326579] font-bold">...</p>
+                      <div className="w-6 h-4  rounded-sm bg-[#326579] flex justify-center items-center">
+                        <p className="text-xs">{totalPageUser}</p>
+                      </div>
+                      <TbPlayerTrackNextFilled color={pageNumberUser === totalPageUser ? "#859094" : "#326579"} className="cursor-pointer" onClick={() => { handleChangePage('next') }} />
+                    </div>
+                  </>
 
-                  })
 
                 ) : (
-                  <></>
+                  <>
+                    <div className='flex flex-row justify-between items-center'>
+                      <p className='font-bold text-sm text-center w-[20%] max-w-[20%] '>ORIGEM</p>
+                      <p className='font-bold text-sm text-center w-[20%] max-w-[20%]'>DESTINO</p>
+                      <p className='font-bold text-sm text-center w-[20%] max-w-[20%]'>VALOR</p>
+                      <p className='font-bold text-sm text-center w-[20%] max-w-[20%]'>DATA</p>
+                      <p className='font-bold text-sm text-center w-[20%] max-w-[20%]'>ID</p>
+
+                    </div>
+                    <div className='w-full h-[0.2px] my-2 bg-white opacity-40' />
+                    {
+                      transactionsInfo?.map((i) => {
+                        return (
+                          <div key={i?.transacao?.id + 'avar'} className='flex flex-col'>
+                            <div className='flex flex-row justify-between items-center'>
+                              <p className='text-xs text-center w-[20%] max-w-[20%] text-white'>{i?.chave_origem?.chave}</p>
+                              <p className='text-xs text-center w-[20%] max-w-[20%]'>{i?.chave_destino.chave}</p>
+                              <p className='text-xs text-center w-[20%] max-w-[20%]'>{i?.valor}</p>
+                              < p className='text-xs text-center w-[20%] max-w-[20%]'>{i?.data_transferencia}</p>
+                              < p className='text-xs text-center w-[20%] max-w-[20%]'>{i?.id}</p>
+                            </div>
+                            <div className='w-full h-[0.2px] my-4 bg-white opacity-20' />                      </div>
+                        )
+
+                      })
+                    }
+
+                    <div className="flex flex-row gap-2 pt-1 w-full justify-end items-center">
+                      <IoPlayBack color={pageNumberTransactions === 1 ? "#859094" : "#326579"} className="cursor-pointer" onClick={() => { handleChangePage('back', 'tsr') }} />
+
+                      <div className="w-6 h-4 rounded-sm bg-[#326579] flex justify-center items-center">
+                        <p className="text-xs">{pageNumberTransactions}</p>
+                      </div>
+                      <p className="text-[#326579] font-bold">...</p>
+                      <div className="w-6 h-4  rounded-sm bg-[#326579] flex justify-center items-center">
+                        <p className="text-xs">{totalPageTransactios}</p>
+                      </div>
+                      <TbPlayerTrackNextFilled color={pageNumberTransactions === totalPageTransactios ? "#859094" : "#326579"} className="cursor-pointer" onClick={() => { handleChangePage('next', 'tsr') }} />
+                    </div>
+                  </>
+
 
                 )
               }
@@ -409,8 +548,20 @@ const Transactions = () => {
 
 
             </div>
-          </div> </div>)
+          </div>
+          <p className='font-bold text-sm text-center underline' onClick={() => {
+            setModalPix(true)
+          }}>Consultar chaves PIX</p>
+        </div>)
+
+
       }
+
+      {modalPix && (
+        <div className="absolute z-50 top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2">
+          <ModalPixConsult closeModal={() => setModalPix(false)} />{' '}
+        </div>
+      )}
       <main className="flex flex-row justify-between px-10 w-full gap-4">
         <div
           onClick={() => setOperation('transactions')}

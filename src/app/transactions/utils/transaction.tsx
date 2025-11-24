@@ -44,15 +44,21 @@ const Transaction = ({ setChaves, chaves, setSaldo }: TransactionProps) => {
       if (teste.status === 201) {
         setIsSuccess(true)
         setSaldo(teste.data.novoSaldo)
+        if (localStorage?.getItem("Token") !== teste.data.token) {
+          localStorage.setItem("Token", teste.data.token)
+        }
       }
     },
   })
 
   useEffect(() => {
     const fetchData = async () => {
-      const teste = await api.get(`/v1/usuarios/${localStorage.getItem('UserId')}/chaves`)
-      setChaves(teste.data)
-      setChaveOrigem(teste.data[0].chave)
+      const teste = await api.get(`/v1/usuarios/${localStorage?.getItem('UserId')}/chaves`)
+      setChaves(teste.data.chaves)
+      setChaveOrigem(teste.data.chaves[0].chave)
+      if (localStorage?.getItem("Token") !== teste.data.token) {
+        localStorage.setItem("Token", teste.data.token)
+      }
     }
     fetchData()
   }, [])
@@ -81,7 +87,7 @@ const Transaction = ({ setChaves, chaves, setSaldo }: TransactionProps) => {
           }}
           className="flex mb-8 cursor-pointer flex-row items-center gap-2 w-full py-2 bg-white/5 border border-white/20 rounded-lg px-4 text-white placeholder-white/50 focus:border-white/30 focus:outline-none"
         >
-          {chaves.map((item: { chave: string; tipo: string }, index: number) => (
+          {chaves?.map((item: { chave: string; tipo: string }, index: number) => (
             <option
               className="text-white bg-[#000a0e]/95 rounded-sm"
               key={index}
@@ -124,10 +130,13 @@ const Transaction = ({ setChaves, chaves, setSaldo }: TransactionProps) => {
                     onBlur={async () => {
                       try {
                         const teste = await api.get(
-                          `/v1/chaves/getter/${field.state.value}/${localStorage.getItem('UserId')}`,
+                          `/v1/chaves/getter/${field.state.value}/${localStorage?.getItem('UserId')}`,
                         )
-                        setUserDestiny(teste.data)
+                        setUserDestiny(teste.data.user)
                         setDisableButton(false)
+                        if (localStorage?.getItem("Token") !== teste.data.token) {
+                          localStorage.setItem("Token", teste.data.token)
+                        }
                       } catch (e: any) {
                         setDisableButton(true)
                         toast.error(e.response?.statusText || 'Erro inesperado')

@@ -1,12 +1,13 @@
 import { useForm } from '@tanstack/react-form'
 import { FaSearch } from 'react-icons/fa'
-import { IoMdCloseCircle } from 'react-icons/io'
+import { IoMdCloseCircle, IoMdTrash } from 'react-icons/io'
 import { IoPlayBack } from 'react-icons/io5'
 import { MdContentCopy, MdPersonSearch } from 'react-icons/md'
 import { TbPlayerTrackNextFilled } from 'react-icons/tb'
 import { ModalPixConsultProps, PixUserData } from './interface'
-import { useEffect, useRef, useState } from 'react'
+import { useEffect, useState } from 'react'
 import { api } from '@/providers/api'
+import { toast } from 'react-toastify'
 import { set } from 'zod'
 
 const ModalPixConsult = ({ closeModal }: ModalPixConsultProps) => {
@@ -14,6 +15,7 @@ const ModalPixConsult = ({ closeModal }: ModalPixConsultProps) => {
   const [pageNumber, setPageNumber] = useState<number>(1)
   const [totalPage, setTotalPage] = useState<number | null>(null)
   const [searchClicked, setSearchClicked] = useState(false)
+  const [recall, setRecall] = useState(false)
 
   const form = useForm({
     defaultValues: {
@@ -27,7 +29,7 @@ const ModalPixConsult = ({ closeModal }: ModalPixConsultProps) => {
 
   useEffect(() => {
     const callApi = async () => {
-    setSearchClicked(false)
+      setSearchClicked(false)
 
       const keys = await api.get(`/v1/chaves/all-keys/${pageNumber}?${form.getFieldValue('cpf').length === 11 ? `cpfcnpj=${form.getFieldValue('cpf')}` : `cpfcnpj='nada'`}`)
 
@@ -35,7 +37,7 @@ const ModalPixConsult = ({ closeModal }: ModalPixConsultProps) => {
       setTotalPage(keys.data.totalPages)
     }
     callApi()
-  }, [pageNumber, searchClicked])
+  }, [pageNumber, searchClicked, recall])
 
 
   const handleChangePage = (type: string) => {
@@ -50,6 +52,19 @@ const ModalPixConsult = ({ closeModal }: ModalPixConsultProps) => {
       setPageNumber(pageNumber - 1)
       return
     }
+  }
+
+  const handleDelete = async (chave: string) => {
+
+    const deleteKey = await api.delete(`/v1/chaves/${chave}`)
+
+    if (deleteKey.status === 204) {
+      toast.success("Chave PIX deletada com sucesso!")
+      setRecall(!recall)
+      return
+    }
+    toast.error("Erro ao deletar chave PIX.")
+
   }
 
 
@@ -100,6 +115,7 @@ const ModalPixConsult = ({ closeModal }: ModalPixConsultProps) => {
             <p className="text-white text-sm font-bold text-center">CPF</p>
             <p className="text-white text-sm font-bold text-center">Nome</p>
             <p className="text-white text-sm font-bold text-center">Chave</p>
+
           </div>
           {allPixKeys?.map((e, index) => (
             <div key={index} className="flex flex-row w-full  px-5 py-3 border-b border-gray-300">
@@ -109,6 +125,9 @@ const ModalPixConsult = ({ closeModal }: ModalPixConsultProps) => {
                 <p className="text-[#031d2b] text-xs">{e.chave} </p>
                 <MdContentCopy color="#031d2b" />
               </div>
+              {e.usuarioId === Number(localStorage.getItem("UserId") ?? 0) && <div onClick={(() => { handleDelete(e.chave) })}
+                className="w-10 justify-center items-center flex cursor-pointer hover:bg-red-50 transition-colors"><IoMdTrash color='#82181a' size={20} />
+              </div>}
             </div>
 
           ))}
@@ -127,7 +146,7 @@ const ModalPixConsult = ({ closeModal }: ModalPixConsultProps) => {
           <TbPlayerTrackNextFilled color={pageNumber === totalPage ? "#859094" : "#326579"} className="cursor-pointer" onClick={() => { handleChangePage('next') }} />
         </div>
       </div>
-    </div>
+    </div >
   )
 }
 export default ModalPixConsult
