@@ -7,8 +7,9 @@ import { toast } from 'react-toastify'
 
 type DepositProps = {
   setSaldo: Dispatch<SetStateAction<number>>
+  saldo: number
 }
-const Deposit = ({ setSaldo }: DepositProps) => {
+const Deposit = ({ setSaldo, saldo }: DepositProps) => {
   const [isSuccess, setIsSuccess] = useState(false)
   const form = useForm({
     defaultValues: {
@@ -16,7 +17,7 @@ const Deposit = ({ setSaldo }: DepositProps) => {
     },
     onSubmit: async ({ value }) => {
       const teste = await api.patch('/v1/conta', {
-        saldo: Number(form.getFieldValue('value')),
+        saldo: Number(form.getFieldValue('value')) + saldo,
         usuarioId: Number(localStorage.getItem('UserId')),
       })
 

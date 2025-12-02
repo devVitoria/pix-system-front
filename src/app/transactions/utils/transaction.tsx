@@ -34,19 +34,24 @@ const Transaction = ({ setChaves, chaves, setSaldo }: TransactionProps) => {
       valor: '',
     },
     onSubmit: async () => {
-      const teste = await api.post(`/v1/transacoes`, {
-        chave_origem: chaveOrigem,
-        chave_destino: form.getFieldValue('chaveDestino'),
-        valor: Number(form.getFieldValue('valor')),
-        mensagem: 'string',
-      })
+      try {
+        const teste = await api.post(`/v1/transacoes`, {
+          chave_origem: chaveOrigem,
+          chave_destino: form.getFieldValue('chaveDestino'),
+          valor: Number(form.getFieldValue('valor')),
+          mensagem: 'string',
+        })
 
-      if (teste.status === 201) {
-        setIsSuccess(true)
-        setSaldo(teste.data.novoSaldo)
-        if (localStorage?.getItem("Token") !== teste.data.token) {
-          localStorage.setItem("Token", teste.data.token)
+
+        if (teste.status === 201) {
+          setIsSuccess(true)
+          setSaldo(teste.data.novoSaldo)
+          if (localStorage?.getItem("Token") !== teste.data.token) {
+            localStorage.setItem("Token", teste.data.token)
+          }
         }
+      } catch (e) {
+        toast.error(`Erro! Saldo insuficiente.`)
       }
     },
   })
@@ -69,6 +74,8 @@ const Transaction = ({ setChaves, chaves, setSaldo }: TransactionProps) => {
     toast.success('Transação realizada com sucesso!')
     form.reset()
   }, [isSuccess])
+
+  console.log("CHAVESS", chaves)
 
   const { Field } = form
   return (

@@ -40,6 +40,13 @@ const Transactions = () => {
 
   const [pageNumberTransactions, setPageNumberTransactions] = useState<number>(1)
 
+  useEffect(() => {
+    const a = () => {
+      setSaldo(Number(localStorage.getItem('Saldo')) ?? 0)
+    }
+    a()
+  }, [])
+
   const router = useRouter()
   const form = useForm({
     defaultValues: user,
@@ -123,7 +130,7 @@ const Transactions = () => {
     transactions: <Transaction setChaves={setChaves} chaves={chaves} setSaldo={setSaldo} />,
     history: <TransactionHistory userId='' />, // TODO chsange to component
     chavepix: <PixkeyRegister />,
-    deposite: <Deposit setSaldo={setSaldo} />,
+    deposite: <Deposit setSaldo={setSaldo} saldo={saldo} />,
   }
 
   useEffect(() => {
@@ -173,8 +180,8 @@ const Transactions = () => {
         <div className="flex flex-row px-10 py-3 w-full justify-between items-center">
           <div className="flex flex-col">
             <p className="text-lg text-white">
-              {/* Bem vindo, {localStorage.getItem('Nome')?.trim().split(' ')[0]}! */}
-              Bem Vindo ..
+              Bem vindo, {localStorage.getItem('Nome')?.trim().split(' ')[0]}!
+          
             </p>
             <p className="text-sm text-white">Navegue entre as opções abaixo.</p>
           </div>

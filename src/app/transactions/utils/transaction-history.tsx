@@ -15,7 +15,7 @@ const TransactionHistory = ({ userId }: TransactionHistoryProps) => {
 
     useEffect(() => {
         const teste = async () => {
-            const response = await api.get(`/v1/usuarios/${userId}/transacoes/${pageNumber}`)
+            const response = await api.get(`/v1/usuarios/${localStorage.getItem("UserId")}/transacoes/${pageNumber}`)
             setTotalPage(response.data.totalPages)
             setTransactionsUser(response.data.transacoesEChaveRelacionada)
         }
@@ -23,7 +23,6 @@ const TransactionHistory = ({ userId }: TransactionHistoryProps) => {
         teste()
 
     }, [pageNumber])
-
 
     const handleChangePage = (type: string) => {
         if (type === 'next') {

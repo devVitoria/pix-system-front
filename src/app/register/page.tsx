@@ -354,7 +354,7 @@ const Register = () => {
           </div>
           <div className="flex w-full flex-row justify-end  gap-4 items-end">
             <button
-              type="submit"
+              type="button"
               className=" cursor-pointer bg-white/15 border border-blue/20 rounded-lg px-4 py-2 text-white placeholder-white/50 font-bold focus:border-white/30 focus:outline-none"
             >
               Limpar
