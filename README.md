@@ -1,7 +1,7 @@
 ## Pix-System
 
 This is a frontend application that simulates the Pix system, developed as part of a college project.
-
+-> video https://youtu.be/yoHSk0fcEw4
 ---
 
 ## Requirements
